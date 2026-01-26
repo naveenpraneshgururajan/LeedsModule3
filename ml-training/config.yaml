@@ -1,0 +1,32 @@
+# ML Training Configuration
+
+data:
+  # Path to your YAML configuration files
+  yaml_files_path: /path/to/your/configs
+  # File pattern to match
+  file_pattern: "env-*.yaml"
+
+models:
+  # Where to save trained models
+  output_path: ../backend/models/
+
+  # Isolation Forest configuration (Anomaly Detection)
+  isolation_forest:
+    contamination: 0.1  # Expected proportion of outliers
+    n_estimators: 100   # Number of trees
+    random_state: 42
+
+  # KMeans configuration (Environment Clustering)
+  kmeans:
+    n_clusters: 5       # Number of environment groups
+    random_state: 42
+    max_iter: 300
+
+# Feature extraction settings
+features:
+  # Include key names as features
+  include_key_names: true
+  # Include value types as features
+  include_value_types: true
+  # Include nested depth as feature
+  include_depth: true

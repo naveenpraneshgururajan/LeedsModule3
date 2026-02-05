@@ -1,0 +1,48 @@
+# Multi-Repository Configuration
+# This file defines all repositories and their structures that should be tracked
+
+repositories:
+  # Repository 1: Original simple structure
+  - name: "main-configs"
+    path: "/path/to/your/main/configs"
+    enabled: true
+    structure: "simple"  # Files directly in root: env-dev01.yaml, env-cit01.yaml
+    file_pattern: "env-*.yaml"
+
+  # Repository 2: Folder-based structure
+  - name: "env-configs"
+    path: "/path/to/your/env-configs/repo"
+    enabled: true
+    structure: "folder"  # Folders: src/env/cit01/, src/env/cit02/
+    base_path: "src/env"  # Base path within repo
+    file_patterns:
+      - "feature-switches.yaml"
+      - "adgroup.yaml"
+      - "dsapps/*.yaml"
+      - "cwa/*.yaml"
+
+  # Repository 3: (Example - add more repos here)
+  - name: "legacy-configs"
+    path: "/path/to/legacy/configs"
+    enabled: false  # Disabled for now
+    structure: "simple"
+    file_pattern: "*.yaml"
+
+# Environment naming
+environment_extraction:
+  # For folder structure: extract from folder name
+  folder_pattern: "src/env/{env_name}"
+  # For simple structure: extract from filename
+  file_pattern: "env-{env_name}.yaml"
+
+# Git settings
+git:
+  track_changes: true
+  use_local_git: true  # Use local git repos (not remote)
+
+# ML Training
+ml_training:
+  # Aggregate all configs from all repos for training
+  aggregate_configs: true
+  # Minimum number of environments needed
+  min_environments: 3

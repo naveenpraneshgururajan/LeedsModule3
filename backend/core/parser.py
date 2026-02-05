@@ -128,6 +128,38 @@ class YAMLParser:
         else:
             return 'unknown'
 
+    def categorize_file(self, file_path: Path) -> str:
+        """
+        Categorize file based on its name or location.
+
+        Returns:
+            Category name: 'switches', 'configmap', 'cwa', 'node', or 'other'
+        """
+        filename = file_path.name.lower()
+        stem = file_path.stem.lower()
+
+        # Check if it's in a cwa folder or matches cwa pattern
+        if 'cwa' in str(file_path).lower():
+            return 'cwa'
+
+        # Check for feature switches
+        if 'switch' in stem or stem == 'feature-switches':
+            return 'switches'
+
+        # Check for config map or adgroup
+        if 'configmap' in stem or 'config-map' in stem or 'adgroup' in stem:
+            return 'configmap'
+
+        # Check for node yaml
+        if 'node' in stem:
+            return 'node'
+
+        # Check for dsapps
+        if 'dsapp' in str(file_path).lower():
+            return 'dsapps'
+
+        return 'other'
+
     def get_all_environments(self) -> List[Dict[str, Any]]:
         """
         Get all environments with metadata.
@@ -146,13 +178,28 @@ class YAMLParser:
             if content is not None:
                 flattened = self.flatten_dict(content)
 
+                # Categorize the file
+                file_path = self.yaml_dir / filename
+                category = self.categorize_file(file_path)
+                categorized_configs = {
+                    'switches': {},
+                    'configmap': {},
+                    'cwa': {},
+                    'node': {},
+                    'dsapps': {},
+                    'other': {}
+                }
+                categorized_configs[category][file_path.stem] = content
+
                 env_data = {
                     'name': env_name,
                     'filename': filename,
                     'type': env_type,
                     'total_keys': len(flattened),
                     'config': content,
-                    'flattened_config': flattened
+                    'flattened_config': flattened,
+                    'categorized_configs': categorized_configs,
+                    'file_categories': {file_path.stem: category}
                 }
                 environments.append(env_data)
 
@@ -182,13 +229,28 @@ class YAMLParser:
                 flattened = self.flatten_dict(content)
                 env_type = self.get_environment_type(env_name)
 
+                # Categorize the file
+                file_path = self.yaml_dir / filename
+                category = self.categorize_file(file_path)
+                categorized_configs = {
+                    'switches': {},
+                    'configmap': {},
+                    'cwa': {},
+                    'node': {},
+                    'dsapps': {},
+                    'other': {}
+                }
+                categorized_configs[category][file_path.stem] = content
+
                 return {
                     'name': env_name,
                     'filename': filename,
                     'type': env_type,
                     'total_keys': len(flattened),
                     'config': content,
-                    'flattened_config': flattened
+                    'flattened_config': flattened,
+                    'categorized_configs': categorized_configs,
+                    'file_categories': {file_path.stem: category}
                 }
 
         return None

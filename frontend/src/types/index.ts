@@ -2,6 +2,15 @@
  * TypeScript Type Definitions for Configuration Manager
  */
 
+export interface CategorizedConfigs {
+  switches: Record<string, any>;
+  configmap: Record<string, any>;
+  cwa: Record<string, any>;
+  node: Record<string, any>;
+  dsapps: Record<string, any>;
+  other: Record<string, any>;
+}
+
 export interface Environment {
   name: string;
   filename: string;
@@ -9,6 +18,8 @@ export interface Environment {
   total_keys: number;
   config: Record<string, any>;
   flattened_config: Record<string, any>;
+  categorized_configs?: CategorizedConfigs;
+  file_categories?: Record<string, string>;
   coverage?: number;
   anomaly_score?: number;
   is_anomaly?: boolean;

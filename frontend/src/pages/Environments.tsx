@@ -13,9 +13,15 @@ import {
   Chip,
   Button,
   LinearProgress,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  IconButton,
 } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 import { useEnvironments } from '../hooks/useEnvironments';
 import { useNavigate } from 'react-router-dom';
+import { EnvironmentDetails } from '../components/EnvironmentDetails';
 import type { Environment } from '../types';
 
 export const Environments: React.FC = () => {
@@ -23,6 +29,18 @@ export const Environments: React.FC = () => {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
+  const [selectedEnvironment, setSelectedEnvironment] = useState<Environment | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+
+  const handleOpenDetails = (env: Environment) => {
+    setSelectedEnvironment(env);
+    setDetailsOpen(true);
+  };
+
+  const handleCloseDetails = () => {
+    setDetailsOpen(false);
+    setSelectedEnvironment(null);
+  };
 
   if (isLoading) return <LinearProgress />;
 
@@ -95,7 +113,11 @@ export const Environments: React.FC = () => {
                       {env.missing_count ? ` | Missing: ${env.missing_count}` : ''}
                     </Typography>
                   </Box>
-                  <Button variant="outlined" size="small">
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => handleOpenDetails(env)}
+                  >
                     View Details
                   </Button>
                 </Box>
@@ -110,6 +132,32 @@ export const Environments: React.FC = () => {
           No environments found matching your filters.
         </Typography>
       )}
+
+      {/* Environment Details Modal */}
+      <Dialog
+        open={detailsOpen}
+        onClose={handleCloseDetails}
+        maxWidth="lg"
+        fullWidth
+        PaperProps={{
+          sx: {
+            minHeight: '80vh',
+            maxHeight: '90vh',
+          },
+        }}
+      >
+        <DialogTitle>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="h5">Environment Configuration Details</Typography>
+            <IconButton onClick={handleCloseDetails} edge="end">
+              <CloseIcon />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          {selectedEnvironment && <EnvironmentDetails environment={selectedEnvironment} />}
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 };

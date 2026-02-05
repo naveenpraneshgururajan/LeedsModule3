@@ -89,6 +89,18 @@ class MultiRepoParser:
             if content:
                 flattened = self.flatten_dict(content)
 
+                # Categorize the file
+                category = self.categorize_file(file_path)
+                categorized_configs = {
+                    'switches': {},
+                    'configmap': {},
+                    'cwa': {},
+                    'node': {},
+                    'dsapps': {},
+                    'other': {}
+                }
+                categorized_configs[category][file_path.stem] = content
+
                 env_data = {
                     'name': env_name,
                     'repository': repo['name'],
@@ -99,11 +111,45 @@ class MultiRepoParser:
                     'total_keys': len(flattened),
                     'config': content,
                     'flattened_config': flattened,
-                    'files': [str(file_path)]  # Single file
+                    'files': [str(file_path)],  # Single file
+                    'categorized_configs': categorized_configs,  # NEW: Configs by category
+                    'file_categories': {file_path.stem: category}  # NEW: File to category mapping
                 }
                 environments.append(env_data)
 
         return environments
+
+    def categorize_file(self, file_path: Path) -> str:
+        """
+        Categorize file based on its name or location.
+
+        Returns:
+            Category name: 'switches', 'configmap', 'cwa', 'node', or 'other'
+        """
+        filename = file_path.name.lower()
+        stem = file_path.stem.lower()
+
+        # Check if it's in a cwa folder or matches cwa pattern
+        if 'cwa' in str(file_path).lower():
+            return 'cwa'
+
+        # Check for feature switches
+        if 'switch' in stem or stem == 'feature-switches':
+            return 'switches'
+
+        # Check for config map or adgroup
+        if 'configmap' in stem or 'config-map' in stem or 'adgroup' in stem:
+            return 'configmap'
+
+        # Check for node yaml
+        if 'node' in stem:
+            return 'node'
+
+        # Check for dsapps
+        if 'dsapp' in str(file_path).lower():
+            return 'dsapps'
+
+        return 'other'
 
     def get_environments_from_folder_repo(self, repo: Dict) -> List[Dict[str, Any]]:
         """
@@ -136,6 +182,18 @@ class MultiRepoParser:
             yaml_files = []
             file_patterns = repo.get('file_patterns', ['*.yaml'])
 
+            # Categorized configs for better UI display
+            categorized_configs = {
+                'switches': {},
+                'configmap': {},
+                'cwa': {},
+                'node': {},
+                'dsapps': {},
+                'other': {}
+            }
+
+            file_categories = {}
+
             for pattern in file_patterns:
                 # Find all matching files
                 for file_path in env_folder.glob(pattern):
@@ -144,8 +202,16 @@ class MultiRepoParser:
                         content = self.load_yaml_file(file_path)
 
                         if content:
-                            # Prefix keys with filename for uniqueness
+                            # Categorize this file
+                            category = self.categorize_file(file_path)
                             file_prefix = file_path.stem  # e.g., "feature-switches"
+                            file_categories[file_prefix] = category
+
+                            # Store in categorized config
+                            if file_prefix not in categorized_configs[category]:
+                                categorized_configs[category][file_prefix] = content
+
+                            # Prefix keys with filename for uniqueness in aggregated config
                             for key, value in content.items():
                                 prefixed_key = f"{file_prefix}.{key}"
                                 aggregated_config[prefixed_key] = value
@@ -163,7 +229,9 @@ class MultiRepoParser:
                     'total_keys': len(flattened),
                     'config': aggregated_config,
                     'flattened_config': flattened,
-                    'files': yaml_files  # Multiple files
+                    'files': yaml_files,  # Multiple files
+                    'categorized_configs': categorized_configs,  # NEW: Configs by category
+                    'file_categories': file_categories  # NEW: File to category mapping
                 }
                 environments.append(env_data)
 
